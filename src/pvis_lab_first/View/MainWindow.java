@@ -1,4 +1,4 @@
-package pvis_lab_first;
+package pvis_lab_first.View;
 
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.*;
@@ -6,28 +6,31 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-import java.awt.event.ActionListener;
-import java.lang.reflect.Array;
+import java.io.IOException;
 import java.util.ArrayList;
 
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
+import org.xml.sax.SAXException;
+import pvis_lab_first.Controller.Controller;
+import pvis_lab_first.Model.Person;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 
 public class MainWindow {
 	private Display display;
 	private Shell shell;
 	private Controller controller;
-	private Table tableStudent;
 	private String path = "C://Users/Artur/eclipse-workspace/pvis_lab_first/src/pvis_lab_first/";
+	private TableComponent tableComponent;
 
 	
 	public MainWindow(Display display, Controller controller) {
 		this.controller = controller;
 		this.display = display;
 		shell = new Shell(display);
-		shell.setSize(1200, 700);
+		shell.setSize(1240, 620);
 
 		RowLayout rowLayout = new RowLayout(SWT.VERTICAL);
 		rowLayout.marginLeft = 10;
@@ -73,8 +76,8 @@ public class MainWindow {
 		addMenuItem.setText("&Add");
 		final MenuItem deleteMenuItem = new MenuItem(editmenu, SWT.PUSH);
 		deleteMenuItem.setText("&Delete");
-		final MenuItem findMenuItem = new MenuItem(editmenu, SWT.PUSH);
-		findMenuItem.setText("&Find");
+		final MenuItem searchMenuItem = new MenuItem(editmenu, SWT.PUSH);
+		searchMenuItem.setText("&Find");
 		// create a Help menu and add an about item
 		final MenuItem help = new MenuItem(menu, SWT.CASCADE);
 		help.setText("&Help");
@@ -84,25 +87,43 @@ public class MainWindow {
 		aboutMenuItem.setText("&About");
 		shell.setMenuBar(menu);
 
-		tableStudent = new Table(this.shell, SWT.BORDER | 6556);
-		tableStudent.setLinesVisible(true);
-		RowData rowDataTableFifthTask = new RowData();
-		rowDataTableFifthTask.height = 363;
-		tableStudent.setLayoutData(rowDataTableFifthTask);
+		tableComponent = new TableComponent(shell);
 
-		TableColumn column = new TableColumn(tableStudent, 0);
-		column.setWidth(400);
+		openMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				FileDialog fileSave = new FileDialog(shell, SWT.OPEN);
+				fileSave.setFilterNames(new String[] {"XML"});
+				fileSave.setFilterExtensions(new String[] {"*.xml"});
+				fileSave.setFilterPath("c:\\"); // Windows path
+				fileSave.setFileName("your_file_name.xml");
+				fileSave.open();
+				fileSave.getFileName();
+				try {
+					controller.load(fileSave.getFilterPath()+"//" + fileSave.getFileName());
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				} catch (SAXException ex) {
+					ex.printStackTrace();
+				} catch (ParserConfigurationException ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+		saveMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				FileDialog fileSave = new FileDialog(shell, SWT.SAVE);
+				fileSave.setFilterNames(new String[] {"XML"});
+				fileSave.setFilterExtensions(new String[] {"*.xml"});
+				fileSave.setFilterPath("c:\\"); // Windows path
+				fileSave.setFileName("your_file_name.xml");
+				fileSave.open();
+				fileSave.getFileName();
+				controller.save(fileSave.getFilterPath()+"//" + fileSave.getFileName());
+			}
+		});
 
-		for (int i = 0; i < 3; ++i) {
-			column = new TableColumn(tableStudent, 0);
-			column.setWidth(250);
-		}
-		tableStudent.getColumn(0);
-		setHandleTable();
-
-
-
-		
 		addToolItem.addSelectionListener(new SelectionAdapter() {
 	        @Override
 	        public void widgetSelected(SelectionEvent e) {
@@ -110,46 +131,65 @@ public class MainWindow {
 	         }
 	     });
 
-		searchToolItem.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				controller.reload();
-			}
-		});
-
 		addMenuItem.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				callAddWindow();
 			}
 		});
+
+		deleteToolItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				callDeleteWindow();
+			}
+		});
+
+		deleteMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				callDeleteWindow();
+			}
+		});
+
+		searchToolItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				callSearchWindow();
+			}
+		});
+
+		searchMenuItem.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				callSearchWindow();
+			}
+		});
 	}
 
-	public void reload(ArrayList<Person> personArrayList){
-		setHandleTable();
-		for(int index = 0; index < personArrayList.size(); index++){
-			TableItem item = new TableItem(tableStudent, SWT.NONE);
-			item.setText(0, personArrayList.get(index).getFullName());
-			item.setText(1, personArrayList.get(index).getDateOfBirth().getDateString() );
-			item.setText(2, personArrayList.get(index).getDateReceipt().getDateString());
-			item.setText(3, personArrayList.get(index).getDateExpiparation().getDateString());
-		}
-
+	public void setData(ArrayList<Person> personArrayList){
+		tableComponent.setData(personArrayList);
 	}
 
-	private void setHandleTable(){
-		tableStudent.removeAll();
-		new TableItem(tableStudent, SWT.NONE);
-		TableItem headline = tableStudent.getItem(0);
-		headline.setText(0, "ФИО Студента");
-		headline.setText(1, "Дата рождения");
-		headline.setText(2, "Дата поступления");
-		headline.setText(3, "Дата окончания вуза");
-	}
 	private void callAddWindow(){
 		shell.setEnabled(false);
 		controller.addStudent();
 		shell.setEnabled(true);
+		shell.setActive();
+	}
+
+	private void callSearchWindow(){
+		shell.setEnabled(false);
+		controller.searchStudent();
+		shell.setEnabled(true);
+		shell.setActive();
+	}
+
+	private void callDeleteWindow(){
+		shell.setEnabled(false);
+		controller.callDeleteRecords();
+		shell.setEnabled(true);
+		shell.setActive();
 	}
 
 	public void start() {
